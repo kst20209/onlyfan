@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OnlyFan</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            text-align: center;
+        }
+        #lottie-container, #stop-image {
+            width: 300px;
+            height: auto;
+        }
+        .button-row {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .button-row button, .single-button {
+            margin: 0;
+            padding: 10px 20px;
+            background-color: #333;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .button-row button:not(:last-child) {
+            border-top-right-radius: 0;
+            border-bottom-right-radius: 0;
+        }
+        .button-row button:not(:first-child) {
+            border-top-left-radius: 0;
+            border-bottom-left-radius: 0;
+        }
+        .button-row button:hover, .single-button:hover {
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.2);
+            transform: translateY(-2px);
+        }
+        .single-button {
+            margin-top: 20px;
+        }
+    </style>
+    <!-- dotLottie Player Library -->
+    <script src="https://unpkg.com/@dotlottie/player-component@1.1.0/dist/dotlottie-player.js"></script>
+</head>
+<body>
+    <p>선풍기 뿐이라서 OnlyFan</p>
+    <img id="stop-image" src="/stop.svg" style="width: 300px; height: auto;">
+    <dotlottie-player id="lottie-container" autoplay loop style="width: 300px; height: auto; display: none;">
+    </dotlottie-player>
+    <div class="button-row">
+        <button id="btn-stop">정지</button>
+        <button id="btn-low">약</button>
+        <button id="btn-medium">중</button>
+        <button id="btn-high">강</button>
+    </div>
+    <button id="btn-online" class="single-button">Online mode is OFF</button>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            let fanState = "정지";
+            let onlineMode = false;
+            const lottieContainer = document.getElementById("lottie-container");
+            const stopImage = document.getElementById("stop-image");
+
+            setFanState(fanState);
+
+            document.getElementById("btn-stop").addEventListener("click", () => setFanState("정지"));
+            document.getElementById("btn-low").addEventListener("click", () => setFanState("약"));
+            document.getElementById("btn-medium").addEventListener("click", () => setFanState("중"));
+            document.getElementById("btn-high").addEventListener("click", () => setFanState("강"));
+
+            document.getElementById("btn-online").addEventListener("click", toggleOnlineMode);
+
+            function setFanState(state) {
+                fanState = state;
+                console.log("Fan state:", fanState);
+                switch (fanState) {
+                    case "정지":
+                        stopImage.style.display = 'block';
+                        lottieContainer.style.display = 'none';
+                        break;
+                    case "약":
+                        stopImage.style.display = 'none';
+                        lottieContainer.style.display = 'block';
+                        lottieContainer.load("/weak.lottie");
+                        break;
+                    case "중":
+                        stopImage.style.display = 'none';
+                        lottieContainer.style.display = 'block';
+                        lottieContainer.load("/mid.lottie");
+                        break;
+                    case "강":
+                        stopImage.style.display = 'none';
+                        lottieContainer.style.display = 'block';
+                        lottieContainer.load("/strong.lottie");
+                        break;
+                }
+            }
+
+            function toggleOnlineMode() {
+                onlineMode = !onlineMode;
+                document.getElementById("btn-online").textContent = onlineMode ? "Online mode is ON" : "Online mode is OFF";
+                console.log("Online mode:", onlineMode);
+            }
+        });
+    </script>
+</body>
+</html>

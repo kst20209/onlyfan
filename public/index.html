@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OnlyFan</title>
+    <title>MyOnlyFan</title>
     <style>
         body {
             display: flex;
@@ -49,69 +49,145 @@
         .single-button {
             margin-top: 20px;
         }
+        .rainbow-gradient {
+            background: linear-gradient(45deg, red, orange, yellow, green, blue, indigo, violet);
+            background-size: 400%;
+            animation: gradient 3s ease infinite;
+            color: white;
+        }
+        @keyframes gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        #input-container {
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
     </style>
     <!-- dotLottie Player Library -->
     <script src="https://unpkg.com/@dotlottie/player-component@1.1.0/dist/dotlottie-player.js"></script>
 </head>
 <body>
-    <p>선풍기 뿐이라서 OnlyFan</p>
-    <img id="stop-image" src="/stop.svg" style="width: 300px; height: auto;">
-    <dotlottie-player id="lottie-container" autoplay loop style="width: 300px; height: auto; display: none;">
-    </dotlottie-player>
-    <div class="button-row">
-        <button id="btn-stop">정지</button>
-        <button id="btn-low">약</button>
-        <button id="btn-medium">중</button>
-        <button id="btn-high">강</button>
+    <div id="input-container">
+        <p>이름을 입력하세요</p>
+        <input type="text" id="user-name" />
+        <p><button id="submit-name">입력</button></p>
     </div>
-    <button id="btn-online" class="single-button">Online mode is OFF</button>
+    <div id="main-content" style="display: none;">
+        <p id="main-text">선풍기 뿐이라서 OnlyFan</p>
+        <img id="stop-image" src="/stop.svg" style="width: 300px; height: auto;">
+        <dotlottie-player id="lottie-container" autoplay loop style="width: 300px; height: auto; display: none;">
+        </dotlottie-player>
+        <div class="button-row">
+            <button id="btn-stop">정지</button>
+            <button id="btn-low">약</button>
+            <button id="btn-medium">중</button>
+            <button id="btn-high">강</button>
+        </div>
+        <button id="btn-online" class="single-button">Online mode is OFF</button>
+    </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            let fanState = "정지";
-            let onlineMode = false;
-            const lottieContainer = document.getElementById("lottie-container");
-            const stopImage = document.getElementById("stop-image");
+            const inputContainer = document.getElementById('input-container');
+            const mainContent = document.getElementById('main-content');
+            const userNameInput = document.getElementById('user-name');
+            const submitNameButton = document.getElementById('submit-name');
+            const mainText = document.getElementById('main-text');
+            const onlineButton = document.getElementById('btn-online');
+            const ws = new WebSocket(`ws://${location.host}`);
 
-            setFanState(fanState);
-
-            document.getElementById("btn-stop").addEventListener("click", () => setFanState("정지"));
-            document.getElementById("btn-low").addEventListener("click", () => setFanState("약"));
-            document.getElementById("btn-medium").addEventListener("click", () => setFanState("중"));
-            document.getElementById("btn-high").addEventListener("click", () => setFanState("강"));
-
-            document.getElementById("btn-online").addEventListener("click", toggleOnlineMode);
-
-            function setFanState(state) {
-                fanState = state;
-                console.log("Fan state:", fanState);
-                switch (fanState) {
-                    case "정지":
-                        stopImage.style.display = 'block';
-                        lottieContainer.style.display = 'none';
-                        break;
-                    case "약":
-                        stopImage.style.display = 'none';
-                        lottieContainer.style.display = 'block';
-                        lottieContainer.load("/weak.lottie");
-                        break;
-                    case "중":
-                        stopImage.style.display = 'none';
-                        lottieContainer.style.display = 'block';
-                        lottieContainer.load("/mid.lottie");
-                        break;
-                    case "강":
-                        stopImage.style.display = 'none';
-                        lottieContainer.style.display = 'block';
-                        lottieContainer.load("/strong.lottie");
-                        break;
-                }
+            let userName = localStorage.getItem('userName');
+            if (!userName) {
+                inputContainer.style.display = 'flex';
+            } else {
+                mainContent.style.display = 'block';
+                initializeApp();
             }
 
-            function toggleOnlineMode() {
-                onlineMode = !onlineMode;
-                document.getElementById("btn-online").textContent = onlineMode ? "Online mode is ON" : "Online mode is OFF";
-                console.log("Online mode:", onlineMode);
+            submitNameButton.addEventListener('click', () => {
+                userName = userNameInput.value;
+                if (userName) {
+                    localStorage.setItem('userName', userName);
+                    inputContainer.style.display = 'none';
+                    mainContent.style.display = 'block';
+                    initializeApp();
+                }
+            });
+
+            function initializeApp() {
+                let fanState = "정지";
+                let onlineMode = false;
+                const lottieContainer = document.getElementById("lottie-container");
+                const stopImage = document.getElementById("stop-image");
+
+                ws.onmessage = (event) => {
+                    const data = JSON.parse(event.data);
+                    setFanState(data.fanState);
+                    if (onlineMode) {
+                        showUserActionMessage(data.updatedBy);
+                    }
+                };
+
+                setFanState(fanState);
+
+                document.getElementById("btn-stop").addEventListener("click", () => setFanStateAndNotify("정지"));
+                document.getElementById("btn-low").addEventListener("click", () => setFanStateAndNotify("약"));
+                document.getElementById("btn-medium").addEventListener("click", () => setFanStateAndNotify("중"));
+                document.getElementById("btn-high").addEventListener("click", () => setFanStateAndNotify("강"));
+
+                onlineButton.addEventListener("click", toggleOnlineMode);
+
+                function setFanState(state) {
+                    fanState = state;
+                    console.log("Fan state:", fanState);
+                    switch (fanState) {
+                        case "정지":
+                            stopImage.style.display = 'block';
+                            lottieContainer.style.display = 'none';
+                            break;
+                        case "약":
+                            stopImage.style.display = 'none';
+                            lottieContainer.style.display = 'block';
+                            lottieContainer.load("/weak.lottie");
+                            break;
+                        case "중":
+                            stopImage.style.display = 'none';
+                            lottieContainer.style.display = 'block';
+                            lottieContainer.load("/mid.lottie");
+                            break;
+                        case "강":
+                            stopImage.style.display = 'none';
+                            lottieContainer.style.display = 'block';
+                            lottieContainer.load("/strong.lottie");
+                            break;
+                    }
+                }
+
+                function setFanStateAndNotify(state) {
+                    setFanState(state);
+                    if (onlineMode) {
+                        ws.send(JSON.stringify({ fanState: state, userName }));
+                    }
+                }
+
+                function toggleOnlineMode() {
+                    onlineMode = !onlineMode;
+                    onlineButton.textContent = onlineMode ? "Online mode is ON" : "Online mode is OFF";
+                    onlineButton.classList.toggle('rainbow-gradient', onlineMode);
+                    console.log("Online mode:", onlineMode);
+                }
+
+                function showUserActionMessage(user) {
+                    const originalText = mainText.textContent;
+                    mainText.textContent = `${user}이(가) 선풍기를 조절했습니다.`;
+                    setTimeout(() => {
+                        mainText.textContent = originalText;
+                    }, 350);
+                }
             }
         });
     </script>

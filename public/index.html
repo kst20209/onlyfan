@@ -99,7 +99,7 @@
             const submitNameButton = document.getElementById('submit-name');
             const mainText = document.getElementById('main-text');
             const onlineButton = document.getElementById('btn-online');
-            const ws = new WebSocket(`ws://${location.host}`);
+            const ws = new WebSocket(`wss://${location.host}`);
 
             let userName = localStorage.getItem('userName');
             if (!userName) {
